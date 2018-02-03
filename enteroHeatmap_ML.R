@@ -14,28 +14,43 @@ library(heatmaply)
 # This is how you would load only one file
 # You assign it to a variable and then use the read.csv function to parse it.
 
-groel_ungapped <- read.csv('SNP table groEL ungapped jan122018.csv')
+groel_ungapped <- read.csv('SNP_table_16SatpApheSgroel_gapped_jan122018.csv')
+
+# Nice! We have read in a SNP matrix as a data frame
 
 row.names(groel_ungapped) <- groel_ungapped$X
 
 groel_ungapped <- groel_ungapped[,2:ncol(groel_ungapped)]
-
-groel_ungapped_dist <- as.dist(groel_ungapped)
-
-heatmaply(as.matrix(groel_ungapped_dist))
 
 # Using the class function, you will get the following information:
 
 # class(groel_ungapped)
 # [1] "data.frame"
 
-# Nice! We have read in a SNP matrix as a data frame
+# Converting the data frame to a distance object will remove the NA entries
+
+groel_ungapped_dist <- as.dist(groel_ungapped)
+
+# Generate interactive heatmap
+
+groel_ungapped_heatmap <- heatmaply(as.matrix(groel_ungapped_dist))
+
+groel_corrected <- read.csv('SNP_table_groel_gapped_jan122018_corrected.csv')
+
+# Working in batch --------------------------------------------------------
 
 # But how about loading multiple files at a time?
 
 # Let's use some wizardry
 
+# First, let's create a list of the names of the CSV files in this folder
+
 allSNPfiles <- Sys.glob(file.path("*.csv"))
+
+allSNPnames <- map(allSNPfiles, 
+                   function(x) str_split(string = x, pattern = "_")) %>% 
+  flatten() %>% 
+  map(function(x) paste0(x[3],"_",x[4]))
 
 allSNPdf <- lapply(allSNPfiles, function(x){
   df <- read.csv(x)
@@ -47,7 +62,18 @@ allSNPdf <- lapply(allSNPdf, function(x){
   x
 })
 
-# Preparing data for generating heatmap -----------------------------------
+allSNPdfDist <- lapply(allSNPdf, function(x){
+  x <- x[,2:ncol(x)]
+  dists <- as.dist(x)
+  dists
+})
+
+allSNPdfHeatmaps <- lapply(allSNPdfDist, function(x){
+  hm <- heatmaply(as.matrix(x))
+  hm
+})
+
+# Generating static heatmaps with gplots ----------------------------------
 
 groel_ungapped <- groel_ungapped[,2:ncol(groel_ungapped)]
 
@@ -112,10 +138,3 @@ trace = "none" # Good that you removed this!
 # These are options to modify the layout. We can leave them commented out for now.
 )
 
-# Heatmap with heatmaply --------------------------------------------------
-
-# Use heatmaply
-
-allSNPdfDist <- lapply(allSNPdf, function(x){
-  as.dist(x)
-})
