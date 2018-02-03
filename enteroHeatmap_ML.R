@@ -47,7 +47,7 @@ groel_corrected <- read.csv('SNP_table_groel_gapped_jan122018_corrected.csv')
 
 allSNPfiles <- Sys.glob(file.path("*.csv"))
 
-allSNPnames <- map(allSNPfiles, 
+allSN1Pnames <- map(allSNPfiles, 
                    function(x) str_split(string = x, pattern = "_")) %>% 
   flatten() %>% 
   map(function(x) paste0(x[3],"_",x[4]))
@@ -75,6 +75,8 @@ allSNPdfHeatmaps <- lapply(allSNPdfDist, function(x){
 
 # Generating static heatmaps with gplots ----------------------------------
 
+entero_metadata <- read.csv()
+
 groel_ungapped <- groel_ungapped[,2:ncol(groel_ungapped)]
 
 groel_ungapped[is.na(groel_ungapped)] <- 0
@@ -85,7 +87,7 @@ hc_dist_groel_ungapped <- hclust(dist_groel_ungapped, method = "complete")
 
 dend_hc <- as.dendrogram(hc_dist_groel_ungapped)
 
-heatmap.2(as.matrix(as.disdist_groel_ungapped),
+heatmap.2(as.matrix(dist_groel_ungapped),
 dendrogram = "both", # plot both dendrograms for rows and columns
 #scale = "row", # Centers and scales data and calculates z-scores in either the row or column direction (or none)
 key.title = "SNP Distance",
