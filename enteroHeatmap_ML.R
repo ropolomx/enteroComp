@@ -4,6 +4,7 @@
 # install.packages("gplots")
 
 library(gplots)
+library(dplyr)
 library(heatmaply)
 
 # Read data ---------------------------------------------------------------
@@ -12,30 +13,64 @@ library(heatmaply)
 # We want to load all of them into R
 
 # This is how you would load only one file
-# You assign it to a variable and then use the read.csv function to parse it.
+# You assign it to a variable and then use the read.csv function to parse it and
+# load it into R.
 
-groel_ungapped <- read.csv('SNP_table_16SatpApheSgroel_gapped_jan122018.csv')
+groel_ungapped <- read.csv('./data/SNP_table_groEL_ungapped_jan122018.csv')
 
 # Nice! We have read in a SNP matrix as a data frame
+# The data frame is one of the most important data structures in R
+# A data frame is the most common way to store data in R
+# A data frame has similarities to an Excel spreadsheet, or a table, but those 
+# are very different things under the hood
 
-row.names(groel_ungapped) <- groel_ungapped$X
-
-groel_ungapped <- groel_ungapped[,2:ncol(groel_ungapped)]
+# How do I know that this is a data frame?
 
 # Using the class function, you will get the following information:
 
 # class(groel_ungapped)
 # [1] "data.frame"
 
-# Converting the data frame to a distance object will remove the NA entries
+# Let's now read the metadata file
+# In this case, we are using a different function called read.table.
+# This function reads files that are separated by a user-provided separator character
+# In this case, that character is the tab (\t)
 
-groel_ungapped_dist <- as.dist(groel_ungapped)
+metadata <- read.table('data/sample_metadata.txt', 
+                       sep="\t",
+                       header=TRUE)
 
-# Generate interactive heatmap
+# Preprocessing data frames -----------------------------------------------
 
-groel_ungapped_heatmap <- heatmaply(as.matrix(groel_ungapped_dist))
+# In this particular format from Geneious, there are points in the data frame 
+# that have NA values when they are read into R. This means that the values are
+# empty, and R assigns them a missing value indicator ('Not available')
+# We can replace those NA values by 0 for this particular format
+# This is because the NA were generated for identical strains (and thus zero difference)
 
-groel_corrected <- read.csv('SNP_table_groel_gapped_jan122018_corrected.csv')
+groel_ungapped[is.na(groel_ungapped)] <- 0
+
+# Now, let's rename the first column of the groel_ungapped_meta
+
+groel_ungapped <- groel_ungapped %>%
+  rename(Iso = X)
+
+# The reason for this is that we are going to use that column to merge it with the
+# metadata file using that column
+
+groel_ungapped_meta <- left_join(groel_ungapped, metadata, by="Iso")
+
+# Let's select certain columns to keep for the metadata
+
+groel_ungapped_meta <- groel_ungapped_meta %>%
+  dplyr::select(Final.ID, everything()) %>%
+  dplyr::select(-dplyr::contains("Iso")) %>%
+  dplyr::select(-dplyr::contains("Location"))
+                  
+
+# Generate interactive heatmap --------------------------------------------
+
+groel_ungapped_heatmap <- heatmaply(groel_ungapped_meta)
 
 # Working in batch --------------------------------------------------------
 
