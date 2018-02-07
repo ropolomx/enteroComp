@@ -16,7 +16,7 @@ library(heatmaply)
 # You assign it to a variable and then use the read.csv function to parse it and
 # load it into R.
 
-groel_ungapped <- read.csv('./data/SNP_table_groEL_ungapped_jan122018.csv')
+groel_gapped <- read.csv('./data/SNP_table_groel_gapped_jan122018.csv')
 
 # Nice! We have read in a SNP matrix as a data frame
 # The data frame is one of the most important data structures in R
@@ -48,21 +48,21 @@ metadata <- read.table('data/sample_metadata.txt',
 # We can replace those NA values by 0 for this particular format
 # This is because the NA were generated for identical strains (and thus zero difference)
 
-groel_ungapped[is.na(groel_ungapped)] <- 0
+groel_gapped[is.na(groel_gapped)] <- 0
 
 # Now, let's rename the first column of the groel_ungapped_meta
 
-groel_ungapped <- groel_ungapped %>%
+groel_gapped <- groel_gapped %>%
   rename(Iso = X)
 
 # The reason for this is that we are going to use that column to merge it with the
 # metadata file using that column
 
-groel_ungapped_meta <- left_join(groel_ungapped, metadata, by="Iso")
+groel_gapped_meta <- left_join(groel_gapped, metadata, by="Iso")
 
 # Let's select certain columns to keep for the metadata
 
-groel_ungapped_meta <- groel_ungapped_meta %>%
+groel_gapped_meta <- groel_gapped_meta %>%
   dplyr::select(Final.ID, everything()) %>%
   dplyr::select(-dplyr::contains("Iso")) %>%
   dplyr::select(-dplyr::contains("Location"))
@@ -70,7 +70,7 @@ groel_ungapped_meta <- groel_ungapped_meta %>%
 
 # Generate interactive heatmap --------------------------------------------
 
-groel_ungapped_heatmap <- heatmaply(groel_ungapped_meta)
+groel_gapped_heatmap <- heatmaply(groel_gapped_meta)
 
 # Working in batch --------------------------------------------------------
 
