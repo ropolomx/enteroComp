@@ -67,7 +67,6 @@ groel_gapped_meta <- groel_gapped_meta %>%
   dplyr::select(-dplyr::contains("Iso")) %>%
   dplyr::select(-dplyr::contains("Location"))
                   
-
 # Generate interactive heatmap --------------------------------------------
 
 groel_gapped_heatmap <- heatmaply(groel_gapped_meta)
@@ -82,7 +81,7 @@ groel_gapped_heatmap <- heatmaply(groel_gapped_meta)
 
 allSNPfiles <- Sys.glob(file.path("*.csv"))
 
-allSN1Pnames <- map(allSNPfiles, 
+allSNPnames <- map(allSNPfiles, 
                    function(x) str_split(string = x, pattern = "_")) %>% 
   flatten() %>% 
   map(function(x) paste0(x[3],"_",x[4]))
