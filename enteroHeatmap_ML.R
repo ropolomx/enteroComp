@@ -5,6 +5,8 @@
 
 library(gplots)
 library(dplyr)
+library(purrr)
+library(stringr)
 library(heatmaply)
 
 # Read data ---------------------------------------------------------------
@@ -79,37 +81,103 @@ groel_gapped_heatmap <- heatmaply(groel_gapped_meta)
 
 # First, let's create a list of the names of the CSV files in this folder
 
-allSNPfiles <- Sys.glob(file.path("*.csv"))
+allSNPfiles <- Sys.glob(file.path("./data/*.csv"))
 
-allSNPnames <- map(allSNPfiles, 
-                   function(x) str_split(string = x, pattern = "_")) %>% 
+# Now, let's create a list with all the filenames only (e.g. 16SatpApheS_gapped)
+
+allSNPnames <- map(allSNPfiles, function(x) str_split(string = x, pattern = "_")) %>% 
   flatten() %>% 
   map(function(x) paste0(x[3],"_",x[4]))
 
-allSNPdf <- lapply(allSNPfiles, function(x){
+# The code below will read all the CSV files in the allSNPfiles list and load them 
+# into a list in the R Global environment
+
+allSNPdf <- map(allSNPfiles, function(x){
   df <- read.csv(x)
+  df
+}) %>%
+  set_names(nm = allSNPnames)
+
+# Let's fix the names so that we only have the isolate names
+
+allSNPdf <- map(allSNPdf, function(x){
+  df <- x %>%
+    rename(Iso = X) %>%
+    mutate(Iso = str_replace(Iso, "(_|\\s|Assembly|\\.).*$", "")) %>%
+    mutate(Iso = str_replace(Iso, "\\.", "-"))
+  names(df) <- str_replace(names(df), "(_|\\s|Assembly|\\.).*$", "")
+  names(df) <- str_replace(names(df), "\\.", "-")
   df
 })
 
-allSNPdf <- lapply(allSNPdf, function(x){
-  row.names(x) <- x$X
+# In this function we are replacing the NA values with zero
+
+allSNPdf <- map(allSNPdf, function(x){
+  x[is.na(x)] <- 0
   x
 })
 
-allSNPdfDist <- lapply(allSNPdf, function(x){
-  x <- x[,2:ncol(x)]
-  dists <- as.dist(x)
-  dists
+# We might have data duplicates 
+# Let's check for those
+
+# map(allSNPdf, function(x) which(duplicated(x$Iso)))
+# $`16SatpApheS_gapped`
+# integer(0)
+# 
+# $`16SatpApheSgroel_gapped`
+# integer(0)
+# 
+# $`16SatpApheSgroel_ungapped`
+# integer(0)
+# 
+# $`16SatpApheS_ungapped`
+# integer(0)
+# 
+# $`16S_gapped`
+# integer(0)
+# 
+# $`16S_ungapped`
+# integer(0)
+# 
+# $atpa_gapped
+# [1] 26
+# 
+# $atpApheS_gapped
+# integer(0)
+# 
+# $atpApheS_ungapped
+# integer(0)
+# 
+# $atpa_ungapped
+# integer(0)
+# 
+# $groel_gapped
+# integer(0)
+# 
+# $groEL_ungapped
+# integer(0)
+# 
+# $pheS_gapped
+# [1] 176
+# 
+# $pheS_ungapped
+# integer(0)
+
+allSNPdf$atpa_gapped <- allSNPdf$atpa_gapped[-26,-27]
+
+allSNPdf$pheS_gapped <- allSNPdf$pheS_gapped[-176,-177]
+
+allSNPdfMeta <- map(allSNPdf, function(x){
+  meta <- left_join(x, metadata, by="Iso")
+  meta
 })
 
-allSNPdfHeatmaps <- lapply(allSNPdfDist, function(x){
-  hm <- heatmaply(as.matrix(x))
+allSNPdfHeatmaps <- lapply(allSNPdf, function(x){
+  hm <- heatmaply(x)
   hm
 })
 
 # Generating static heatmaps with gplots ----------------------------------
-
-entero_metadata <- read.csv()
 
 groel_ungapped <- groel_ungapped[,2:ncol(groel_ungapped)]
 
