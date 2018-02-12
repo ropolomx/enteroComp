@@ -1,19 +1,19 @@
 Iso	Location	Final ID
 F5 (sept 30)	CAS P	
-G12 (sept 30)	CAS P	E. gallinarum
-A1 (oct 1st)	CAS P	
-B9 (oct 1st)	CAS P	
-D10 (oct 1st)	CAS P	
-D1.3o	CAS P	E. faecalis
-H2.1o	CAS P	E. faecalis
+G12s	CAS P	E. gallinarum
+A1o	CAS P	
+B9o	CAS P	
+D10o	CAS P	
+D1-3o	CAS P	E. faecalis
+H2-1o	CAS P	E. faecalis
 B10-2 (oct 8th)	CAS P	
-E8.2o	CAS P	E. casseliflavus
+E8-2o	CAS P	E. casseliflavus
 H37S1	CAS P	E. casseliflavus
 H40S1	CAS P	E. casseliflavus
 H47S1	CAS P	E. casseliflavus
 H53S1	CAS P	E. faecium
 H59S1	CAS P	E. casseliflavus
-H1.1o	CAS P	E. faecalis
+H1-1o	CAS P	E. faecalis
 H63S1	CAS P	E. faecium
 H69S1	CAS P	E. faecium
 H72S1	CAS P	E. faecium
@@ -310,15 +310,15 @@ ATCC25923	N	Staphylococcus
 ATCC27270	N	E. faecium
 ATCC51299	N	E. faecalis
 ATCC700221	N	E. faecium
-X3	CAS P	E. casseliflavus
-X21	CAS P	E. casseliflavus
-X30	CAS P	E. casseliflavus
-X39	CAS P	E. faecalis
-X52	CAS P	E. casseliflavus
-X54	CAS P	E. casseliflavus, E. gallinarum
-X97	CAS P	E. casseliflavus
-X103	CAS P	E. faecalis
-X104	CAS P	E. casseliflavus
-X114	CAS P	E. casseliflavus
-NSP2.1	CAS P	E. casseliflavus, E. gallinarum
+3	CAS P	E. casseliflavus
+21	CAS P	E. casseliflavus
+30	CAS P	E. casseliflavus
+39	CAS P	E. faecalis
+52	CAS P	E. casseliflavus
+54	CAS P	E. casseliflavus, E. gallinarum
+97	CAS P	E. casseliflavus
+103	CAS P	E. faecalis
+104	CAS P	E. casseliflavus
+114	CAS P	E. casseliflavus
+NSP2-1	CAS P	E. casseliflavus, E. gallinarum
 P3-6	CAS P	E. gallinarum
