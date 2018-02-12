@@ -172,7 +172,13 @@ allSNPdfMeta <- map(allSNPdf, function(x){
   meta
 })
 
-allSNPdfHeatmaps <- lapply(allSNPdf, function(x){
+allSNPdfMeta <- map(allSNPdfMeta, function(x){
+  meta <- dplyr::select(x, Final.ID, everything()) %>%
+    dplyr::select(-dplyr::contains("Iso")) %>%
+    dplyr::select(-dplyr::contains("Location"))
+})
+
+allSNPdfHeatmaps <- lapply(allSNPdfMeta, function(x){
   hm <- heatmaply(x)
   hm
 })
