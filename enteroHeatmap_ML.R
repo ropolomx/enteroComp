@@ -42,7 +42,7 @@ metadata <- read.table('data/sample_metadata.txt',
                        sep="\t",
                        header=TRUE)
 
-# Preprocessing data frames -----------------------------------------------
+# Pre-processing one dataframe -----------------------------------------------
 
 # In this particular format from Geneious, there are points in the data frame 
 # that have NA values when they are read into R. This means that the values are
@@ -69,21 +69,21 @@ groel_gapped_meta <- groel_gapped_meta %>%
   dplyr::select(-dplyr::contains("Iso")) %>%
   dplyr::select(-dplyr::contains("Location"))
                   
-# Generate interactive heatmap --------------------------------------------
+# Generate one interactive heatmap ----------------------------------------
 
 groel_gapped_heatmap <- heatmaply(groel_gapped_meta)
 
-# Working in batch --------------------------------------------------------
 
-# But how about loading multiple files at a time?
+# Preliminary steps for generating heatmaps in batch ----------------------
 
+# How about processing all the SNP distance files?
 # Let's use some wizardry
 
 # First, let's create a list of the names of the CSV files in this folder
 
 allSNPfiles <- Sys.glob(file.path("./data/*.csv"))
 
-# Now, let's create a list with all the filenames only (e.g. 16SatpApheS_gapped)
+# Now, let's create a list with all the filename prefixes only (e.g. 16SatpApheS_gapped)
 
 allSNPnames <- map(allSNPfiles, function(x) str_split(string = x, pattern = "_")) %>% 
   flatten() %>% 
@@ -97,6 +97,9 @@ allSNPdf <- map(allSNPfiles, function(x){
   df
 }) %>%
   set_names(nm = allSNPnames)
+
+
+# Extract isolate names ---------------------------------------------------
 
 # Let's fix the names so that we only have the isolate names
 
@@ -121,6 +124,7 @@ allSNPdf <- map(allSNPdf, function(x){
 # Let's check for those
 
 # map(allSNPdf, function(x) which(duplicated(x$Iso)))
+#
 # $`16SatpApheS_gapped`
 # integer(0)
 # 
@@ -167,6 +171,9 @@ allSNPdf$atpa_gapped <- allSNPdf$atpa_gapped[-26,-27]
 
 allSNPdf$pheS_gapped <- allSNPdf$pheS_gapped[-176,-177]
 
+
+# Merge isolate metadata with SNP distances -------------------------------
+
 allSNPdfMeta <- map(allSNPdf, function(x){
   meta <- left_join(x, metadata, by="Iso")
   meta
@@ -175,11 +182,21 @@ allSNPdfMeta <- map(allSNPdf, function(x){
 allSNPdfMeta <- map(allSNPdfMeta, function(x){
   meta <- dplyr::select(x, Final.ID, everything()) %>%
     dplyr::select(-dplyr::contains("Iso")) %>%
-    dplyr::select(-dplyr::contains("Location"))
+    dplyr::select(-dplyr::contains("Location")) %>%
+    rename(Species=Final.ID)
 })
 
-allSNPdfHeatmaps <- lapply(allSNPdfMeta, function(x){
-  hm <- heatmaply(x)
+
+# Generate all heatmaps ---------------------------------------------------
+
+allSNPdfHeatmaps <- imap(allSNPdfMeta, function(x,y){
+  hm <- heatmaply(x, 
+                  main = y,
+                  fontsize_row = 8,
+                  fontsize_col = 8,
+                  column_text_angle = 90,
+                  showticklabels = FALSE
+                  )
   hm
 })
 
