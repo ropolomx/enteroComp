@@ -63,6 +63,11 @@ ast_hamming_species <- map2(ast_profiles, ast_hamming, ~ data.frame(.x$Species,.
 ast_heatmaps <- map(ast_profiles, function(x){
   hm <- heatmaply(x[c(2,4:15)],
                   dendrogram="both",
+                  seriate = "mean",
+                  plot_method = "plotly",
+                  hclust_method = "average",
+                  margins = c(50,35,NA,NA),
+                  hide_colorbar = TRUE,
                   labRow=x$Iso
                   )
   hm
@@ -76,8 +81,7 @@ ast_hamming_heatmaps <- map2(ast_hamming_species, ast_profiles, function(x,y){
                   hclust_method = "mcquitty",
                   seriate = "mean",
                   plot_method="plotly",
-                  margins = c(30,NA,NA,NA),
-                  
+                  margins = c(50,NA,NA,NA),
                   # scale_fill_gradient_fun = scale_fill_gradient(low="black", high="red")
                   labRow = y$Iso
                   )
