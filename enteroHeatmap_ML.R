@@ -122,7 +122,7 @@ allSNPdf <- map(allSNPdf, function(x){
 # We might have data duplicates 
 # Let's check for those
 
-# map(allSNPdf, function(x) which(duplicated(x$Iso)))
+map(allSNPdf, ~ which(duplicated(.x$Iso)))
 #
 # $`16SatpApheS_gapped`
 # integer(0)
@@ -185,19 +185,40 @@ allSNPdfMeta <- map(allSNPdfMeta, function(x){
     rename(Species=Final.ID)
 })
 
-
 # Generate all heatmaps ---------------------------------------------------
 
-allSNPdfHeatmaps <- imap(allSNPdfMeta, function(x,y){
+all_SNPdf_Meta_Sub <- discard(allSNPdfMeta, str_detect(names(allSNPdfMeta), "ungapped"))
+
+allSNPdfHeatmaps <- imap(all_SNPdf_Meta_Sub, function(x,y){
   hm <- heatmaply(x, 
+                  dendrogram = "both",
+                  plot_method = "plotly",
                   main = y,
+                  # margins = c(50,32,NA,11),
                   fontsize_row = 8,
-                  fontsize_col = 8,
-                  column_text_angle = 90,
+                  fontsize_col = 11,
+                  column_text_angle = 45,
+                  key.title = "SNP distance",
+                  # colorbar_xpos = -1,
+                  colorbar_ypos = 2,
                   showticklabels = FALSE
-                  )
+         )
   hm
 })
+
+groel_gapped_heatmap <- heatmaply(all_SNPdf_Meta_Sub$groel_gapped, 
+                  dendrogram = "both",
+                  plot_method = "ggplot",
+                  main = "groel_gapped",
+                  margins = c(50,32,NA,11),
+                  fontsize_row = 8,
+                  fontsize_col = 11,
+                  column_text_angle = 45,
+                  key.title = "SNP distance",
+                  # colorbar_xpos = -1,
+                  colorbar_ypos = 2,
+                  showticklabels = FALSE
+         )
 
 # Generating static heatmaps with gplots ----------------------------------
 
