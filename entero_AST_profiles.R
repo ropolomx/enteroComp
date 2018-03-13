@@ -28,7 +28,6 @@ ast_profiles <- lapply(ast_profiles, function(x){
   na.omit(x)
 })
 
-
 # Tabulate binary profiles ------------------------------------------------
 
 ast_binary_freqs <- ast_profiles %>%
@@ -56,21 +55,138 @@ ast_hamming <- ast_profiles %>%
 
 ast_hamming_species <- map2(ast_profiles, ast_hamming, ~ data.frame(.x$Species,.y))
 
+# Hamming datasets with merged data ---------------------------------------
+
+ast_hamming_BAF <- list(
+  ast_hamming_species$`BAF FE Species binary`,
+  ast_hamming_species$`BAF PE Species binary`
+)
+
+ast_hamming_BAF <- do.call("rbind", ast_hamming_BAF)
+
+ast_hamming_CAS <- list(
+  ast_hamming_species$`CAS FE Species binary`,
+  ast_hamming_species$`CAS PE Species binary`
+)
+
+ast_hamming_CAS
+
 # Generate heatmaps --------------------------------------------------------
+
+# Preliminary step: order Species columns the same way for all datasets
+# This is to get the same colour scheme in all the plots
+
+ast_profiles$`BAF FE Species binary`$Species <- 
+  factor(as.factor(ast_profiles$`BAF FE Species binary`$Species),
+         levels = c("E. faecium", 
+              "E. faecalis", 
+              "E. hirae",
+              "E. gallinarum",
+              "E. casseliflavus"
+              )
+  )
+
+ast_profiles$`BAF PE Species binary`$Species <-
+  factor(as.factor(ast_profiles$`BAF PE Species binary`$Species),
+         levels = c("E. faecium",
+                    "E. faecalis",
+                    "E. hirae",
+                    "E. gallinarum",
+                    "E. casseliflavus",
+                    "E. casseliflavus/E. gallinarum",
+                    "E. mundtii",
+                    "E. saccharolyticus"
+                    )
+         )
+
+ast_profiles$`CAS FE Species binary`$Species <-
+  factor(as.factor(ast_profiles$`CAS FE Species binary`$Species),
+         levels = c("E. faecium",
+                    "E. faecalis",
+                    "E. hirae",
+                    "E. gallinarum",
+                    "E. casseliflavus",
+                    "E. casseliflavus/E. gallinarum"
+                    )
+         )
+
+
+ast_profiles$`CAS PE Species binary`$Species <-
+  factor(as.factor(ast_profiles$`CAS PE Species binary`$Species),
+         levels = c("E. faecium",
+                    "E. faecalis",
+                    "E. hirae",
+                    "E. gallinarum",
+                    "E. casseliflavus",
+                    "E. casseliflavus/E. gallinarum"
+                    )
+         )
 
 # Presence/absence heatmaps (binary patterns only)
 
-ast_heatmaps <- map(ast_profiles, function(x){
+# Will attempt to generate separately due to color schemes
+# TODO: customize rowside colors
+
+custom_heatmaply <- function(profile, title, colScale){
+  heatmaply(profile[c(2,4:15)],
+            dendrogram="both",
+            seriate = "mean",
+            plot_method = "plotly",
+            hclust_method = "average",
+            margins = c(45,32,NA,11),
+            fontsize_row = 8,
+            fontsize_col = 13,
+            main = title,
+            RowSideColors = colScale,
+            hide_colorbar = TRUE,
+            labRow=profile$Iso
+  )}
+
+ast_heatmap_baf_fe <- custom_heatmaply(
+  ast_profiles$`BAF FE Species binary`,
+  "BAF FE Species",
+  c("light blue",
+    "light green",
+    "green",
+    "pink")
+  )
+
+# Map function to generate All heatmaps
+
+ast_heatmaps <- imap(ast_profiles, function(x,y){
   hm <- heatmaply(x[c(2,4:15)],
                   dendrogram="both",
                   seriate = "mean",
                   plot_method = "plotly",
                   hclust_method = "average",
-                  margins = c(50,35,NA,NA),
+                  main = y,
+                  margins = c(45,32,NA,11),
+                  fontsize_row = 8,
+                  fontsize_col = 13,
+                  # row_side_palette = c(
                   hide_colorbar = TRUE,
                   labRow=x$Iso
                   )
   hm
+})
+
+# Saving directly to the 
+
+iwalk(ast_profiles, function(x,y){
+  heatmaply(x[c(2,4:15)],
+            dendrogram="both",
+            seriate = "mean",
+            plot_method = "plotly",
+            hclust_method = "average",
+            main = y,
+            margins = c(50,35,NA,11),
+            hide_colorbar = TRUE,
+            labRow=x$Iso,
+            file = paste("heatmaps/",y,".png"),
+            width = 1200,
+            height = 1000
+            )
+  # browseURL(paste("heatmaps/",y,".png"))
 })
 
 # Heatmaps of Hamming distance matrices
@@ -87,7 +203,6 @@ ast_hamming_heatmaps <- map2(ast_hamming_species, ast_profiles, function(x,y){
                   )
   hm
 })
-
 
 # Generate UpSet figures --------------------------------------------------
 

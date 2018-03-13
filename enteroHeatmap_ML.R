@@ -73,7 +73,6 @@ groel_gapped_meta <- groel_gapped_meta %>%
 
 groel_gapped_heatmap <- heatmaply(groel_gapped_meta)
 
-
 # Preliminary steps for generating heatmaps in batch ----------------------
 
 # How about processing all the SNP distance files?
