@@ -206,19 +206,22 @@ allSNPdfHeatmaps <- imap(all_SNPdf_Meta_Sub, function(x,y){
   hm
 })
 
-groel_gapped_heatmap <- heatmaply(all_SNPdf_Meta_Sub$groel_gapped, 
-                  dendrogram = "both",
-                  plot_method = "ggplot",
-                  main = "groel_gapped",
-                  margins = c(50,32,NA,11),
-                  fontsize_row = 8,
-                  fontsize_col = 11,
-                  column_text_angle = 45,
-                  key.title = "SNP distance",
-                  # colorbar_xpos = -1,
-                  colorbar_ypos = 2,
-                  showticklabels = FALSE
-         )
+all_SNPdf_Meta_Sub$groel_gapped$Species <- as.character(all_SNPdf_Meta_Sub$groel_gapped$Species)
+
+groel_gapped_heatmap <- heatmaply(all_SNPdf_Meta_Sub$groel_gapped,
+  dendrogram = "both",
+  # plot_method = "plotly",
+  main = "groel_gapped",
+  # margins = c(50,32,NA,11),
+  fontsize_row = 8,
+  fontsize_col = 11,
+  column_text_angle = 45,
+  key.title = "SNP distance",
+  # hide_colorbar = TRUE,
+  # colorbar_xpos = -1,
+  # colorbar_ypos = 2,
+  showticklabels = FALSE
+)
 
 # Generating static heatmaps with gplots ----------------------------------
 
