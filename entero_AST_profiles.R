@@ -4,6 +4,7 @@
 library(readxl)
 library(dplyr)
 library(purrr)
+library(stringr)
 library(heatmaply)
 library(UpSetR)
 
@@ -27,6 +28,19 @@ ast_profiles <- ast_profiles[-1]
 ast_profiles <- lapply(ast_profiles, function(x){
   na.omit(x)
 })
+
+# Merge E.cass and E.gall
+
+ast_profiles <- lapply(ast_profiles, function(x) {
+  x <- x %>%
+    mutate(Species = str_replace(
+      Species,
+      "^E. (casseliflavus$|gallinarum$|casseliflvaus$)",
+      "E. casseliflavus\\/E. gallinarum"
+    ))
+  x
+})
+
 
 # Tabulate binary profiles ------------------------------------------------
 
@@ -81,8 +95,7 @@ ast_profiles$`BAF FE Species binary`$Species <-
          levels = c("E. faecium", 
               "E. faecalis", 
               "E. hirae",
-              "E. gallinarum",
-              "E. casseliflavus"
+              "E. casseliflavus/E. gallinarum"
               )
   )
 
@@ -91,8 +104,6 @@ ast_profiles$`BAF PE Species binary`$Species <-
          levels = c("E. faecium",
                     "E. faecalis",
                     "E. hirae",
-                    "E. gallinarum",
-                    "E. casseliflavus",
                     "E. casseliflavus/E. gallinarum",
                     "E. mundtii",
                     "E. saccharolyticus"
@@ -104,8 +115,6 @@ ast_profiles$`CAS FE Species binary`$Species <-
          levels = c("E. faecium",
                     "E. faecalis",
                     "E. hirae",
-                    "E. gallinarum",
-                    "E. casseliflavus",
                     "E. casseliflavus/E. gallinarum"
                     )
          )
@@ -116,8 +125,6 @@ ast_profiles$`CAS PE Species binary`$Species <-
          levels = c("E. faecium",
                     "E. faecalis",
                     "E. hirae",
-                    "E. gallinarum",
-                    "E. casseliflavus",
                     "E. casseliflavus/E. gallinarum"
                     )
          )
@@ -161,8 +168,8 @@ ast_heatmaps <- imap(ast_profiles, function(x,y){
                   hclust_method = "average",
                   main = y,
                   margins = c(45,32,NA,11),
-                  fontsize_row = 8,
-                  fontsize_col = 13,
+                  fontsize_row = 7,
+                  fontsize_col = 10,
                   # row_side_palette = c(
                   hide_colorbar = TRUE,
                   labRow=x$Iso
