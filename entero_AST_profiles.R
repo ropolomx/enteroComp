@@ -39,15 +39,52 @@ ast_profiles <- lapply(ast_profiles, function(x) {
   x
 })
 
-# Retrieve Isolate names, then split by sewage treatment plant type
+# Generate two lists, one for BAF data and the other for CAS data
+
+ast_profiles_BAF <- list(
+  ast_profiles$`BAF FE Species binary`,
+  ast_profiles$`BAF PE Species binary`
+) %>%
+  set_names(nm = c("FE", "PE"))
+
+ast_profiles_BAF$FE <- 
+  ast_profiles_BAF$FE %>%
+  rename(AMPI = AMPR)
+
+ast_profiles_BAF <- do.call("rbind", ast_profiles_BAF)
+
+ast_profiles_BAF <- 
+  ast_profiles_BAF %>%
+  mutate(Location = str_replace(Location, "BAF ",""))
+
+ast_profiles_CAS <- list(
+  ast_profiles$`CAS FE Species binary`,
+  ast_profiles$`CAS PE Species binary`
+) %>%
+  set_names(nm = c ("FE", "PE"))
+
+ast_profiles_CAS$FE <- 
+  ast_profiles_CAS$FE %>%
+  rename(TEIC = TERC)
+
+ast_profiles_CAS <- do.call("rbind", ast_profiles_CAS)
+
+ast_profiles_CAS <- 
+  ast_profiles_CAS %>%
+  mutate(Location = str_replace(Location, "CAS ",""))
+
+# Calculate Hamming distances on BAF and CAS lists
+
+# Retrieve Isolate names, then manually split by sewage treatment plant type
 
 # There has to be a much better way to extract the isolate character vectors
 
 isolate_names <- 
   ast_profiles %>%
-  map(~ select(.x,Iso) %>% 
-        as_vector(.) %>% 
-        unname(.)
+  map(
+    ~ select(.x,Iso) %>% 
+      as_vector(.) %>% 
+      unname(.)
   )
 
 isolate_names_BAF <- list(
@@ -69,6 +106,10 @@ ast_binary_freqs <-
   ast_profiles %>%
   map(~ sort(table(.x[16]), decreasing = TRUE))
 
+ast_binary_freqs_BAF <- sort(table(ast_profiles_BAF$Binary), decreasing = TRUE)
+
+ast_binary_freqs_CAS <- sort(table(ast_profiles_CAS$Binary), decreasing = TRUE)
+
 # Calculate Hamming distance matrices -------------------------------------
 
 # Create function for calculating Hamming distance of binary AST data
@@ -84,6 +125,10 @@ hamming <- function(x){
 ast_hamming <- ast_profiles %>%
   map(~ hamming(as.matrix(.x[4:15])))
 
+ast_hamming_BAF <- hamming(as.matrix(ast_profiles_BAF[4:15]))
+
+ast_hamming_CAS <- hamming(as.matrix(ast_profiles_CAS[4:15]))
+  
 # Another option from e1071 package:
 # ast_hamming_e1071 <- ast_profiles[2:5] %>%
 #   map(~ hamming.distance(as.matrix(.x[4:15])))
@@ -95,6 +140,28 @@ ast_hamming_species <- map2(
   ast_hamming, 
   ~ data.frame(.x$Species,.y)
 )
+
+# Function to assign the isolate names of each dataset as 
+# column name
+
+assign_names <- function(x,y){
+  names(x) <- c("Species","Location",y)
+  row.names(x) <- y # Isolate name y-axis,
+  # x <- select(x, Species, Isolate, everything())
+  x
+}
+
+ast_hamming_BAF <- data.frame(ast_profiles_BAF$Species, 
+                              ast_profiles_BAF$Location,
+                              ast_hamming_BAF)
+
+ast_hamming_BAF <- assign_names(ast_hamming_BAF, ast_profiles_BAF$Iso)
+
+ast_hamming_CAS <- data.frame(ast_profiles_CAS$Species, 
+                              ast_profiles_CAS$Location,
+                              ast_hamming_CAS)
+
+ast_hamming_CAS <- assign_names(ast_hamming_CAS, ast_profiles_CAS$Iso)
 
 
 # Merge Hamming datasets using tidy methods -------------------------------
@@ -176,11 +243,14 @@ ast_hamming_CAS_tidy <-
 
 # Converting Hamming datasets back to matrix format -----------------------
 
-# Purpose: need to do in order to plot as heatmap
+# Purpose: requested by Haley to plot as heatmap
 
 ast_hamming_BAF_wide <-
   ast_hamming_BAF_tidy %>%
-  spread(key = Isolate_y, value = hamming)
+  spread(key = Isolate_x, value = hamming)
+
+# Result: Many columns with NA values because not all strains were retrieved
+# from both environments
 
 # Generate heatmaps --------------------------------------------------------
 
@@ -304,9 +374,10 @@ ast_hamming_heatmaps <- map2(
                   hclust_method = "mcquitty",
                   seriate = "mean",
                   plot_method="plotly",
-                  margins = c(50,NA,NA,NA),
+                  margins = c(45,NA,NA,NA),
                   # scale_fill_gradient_fun = scale_fill_gradient(low="black", high="red")
-                  labRow = y$Iso
+                  labRow = y$Iso,
+                  labCol = y$Iso
                   )
   hm
   })
