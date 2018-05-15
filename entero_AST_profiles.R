@@ -397,8 +397,3 @@ upset(fromList(binaries),
       # empty.intersections = TRUE,
       point.size = 3.2,
       text.scale=c(2,2,2,1.5,2))
-
-
-
-
-
