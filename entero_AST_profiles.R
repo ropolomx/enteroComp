@@ -96,7 +96,8 @@ ast_hamming_species <- map2(
   ~ data.frame(.x$Species,.y)
 )
 
-# Hamming datasets with merged data ---------------------------------------
+
+# Merge Hamming datasets using tidy methods -------------------------------
 
 # Might want consider using map2 here (and in other sections of the script)
 
@@ -113,6 +114,8 @@ ast_hamming_BAF <- list(
 
 assign_names <- function(x,y){
   names(x) <- c("Species",y)
+  x$Isolate_y <- y # Isolate name y-axis,
+  x <- select(x, Species, Isolate_y, everything())
   x
 }
 
@@ -128,9 +131,9 @@ ast_hamming_BAF_tidy <-
   ast_hamming_BAF %>%
   map_dfr(
     ~ gather(.x,
-      key = Isolate,
+      key = Isolate_x,
       value = hamming,
-      -Species
+      -Species, -Isolate_y
     ),
     .id = "Location"
   )
@@ -154,9 +157,9 @@ ast_hamming_CAS_tidy <-
   ast_hamming_CAS %>%
   map_dfr(
     ~ gather(.x,
-      key = Isolate,
+      key = Isolate_x,
       value = hamming,
-      -Species
+      -Species, -Isolate_y
     ),
     .id = "Location"
   )
@@ -169,6 +172,15 @@ ast_hamming_CAS_tidy <-
 #   binding character and factor vector, coercing into character vector
 # 3: In bind_rows_(x, .id) :
 #   binding character and factor vector, coercing into character vector
+
+
+# Converting Hamming datasets back to matrix format -----------------------
+
+# Purpose: need to do in order to plot as heatmap
+
+ast_hamming_BAF_wide <-
+  ast_hamming_BAF_tidy %>%
+  spread(key = Isolate_y, value = hamming)
 
 # Generate heatmaps --------------------------------------------------------
 
@@ -281,7 +293,7 @@ iwalk(ast_profiles, function(x,y){
   # browseURL(paste("heatmaps/",y,".png"))
 })
 
-# Heatmaps of Hamming distance matrices
+# Heatmaps of Hamming distances -------------------------------------------
 
 ast_hamming_heatmaps <- map2(
   ast_hamming_species, 
