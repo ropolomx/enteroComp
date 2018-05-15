@@ -198,7 +198,10 @@ iwalk(ast_profiles, function(x,y){
 
 # Heatmaps of Hamming distance matrices
 
-ast_hamming_heatmaps <- map2(ast_hamming_species, ast_profiles, function(x,y){
+ast_hamming_heatmaps <- map2(
+  ast_hamming_species, 
+  ast_profiles, 
+  function(x,y){
   hm <- heatmaply(x,
                   dendrogram="both",
                   hclust_method = "mcquitty",
@@ -209,7 +212,7 @@ ast_hamming_heatmaps <- map2(ast_hamming_species, ast_profiles, function(x,y){
                   labRow = y$Iso
                   )
   hm
-})
+  })
 
 # Generate UpSet figures --------------------------------------------------
 
