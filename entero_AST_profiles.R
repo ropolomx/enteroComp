@@ -2,9 +2,7 @@
 # Load packages -----------------------------------------------------------
 
 library(readxl)
-library(dplyr)
-library(purrr)
-library(stringr)
+library(tidyverse)
 library(heatmaply)
 library(UpSetR)
 
@@ -41,10 +39,34 @@ ast_profiles <- lapply(ast_profiles, function(x) {
   x
 })
 
+# Retrieve Isolate names, then split by sewage treatment plant type
+
+# There has to be a much better way to extract the isolate character vectors
+
+isolate_names <- 
+  ast_profiles %>%
+  map(~ select(.x,Iso) %>% 
+        as_vector(.) %>% 
+        unname(.)
+  )
+
+isolate_names_BAF <- list(
+  isolate_names$`BAF FE Species binary`,
+  isolate_names$`BAF PE Species binary`
+) %>%
+  set_names(nm = c("FE", "PE"))
+
+isolate_names_CAS <- list(
+  isolate_names$`CAS FE Species binary`,
+  isolate_names$`CAS PE Species binary`
+) %>%
+  set_names(nm = c("FE", "PE"))
+
 
 # Tabulate binary profiles ------------------------------------------------
 
-ast_binary_freqs <- ast_profiles %>%
+ast_binary_freqs <- 
+  ast_profiles %>%
   map(~ sort(table(.x[16]), decreasing = TRUE))
 
 # Calculate Hamming distance matrices -------------------------------------
@@ -62,28 +84,91 @@ hamming <- function(x){
 ast_hamming <- ast_profiles %>%
   map(~ hamming(as.matrix(.x[4:15])))
 
+# Another option from e1071 package:
 # ast_hamming_e1071 <- ast_profiles[2:5] %>%
 #   map(~ hamming.distance(as.matrix(.x[4:15])))
 
 # Create list with Species names for heatmaps
 
-ast_hamming_species <- map2(ast_profiles, ast_hamming, ~ data.frame(.x$Species,.y))
+ast_hamming_species <- map2(
+  ast_profiles, 
+  ast_hamming, 
+  ~ data.frame(.x$Species,.y)
+)
 
 # Hamming datasets with merged data ---------------------------------------
+
+# Might want consider using map2 here (and in other sections of the script)
+
+# Extract BAF datasets
 
 ast_hamming_BAF <- list(
   ast_hamming_species$`BAF FE Species binary`,
   ast_hamming_species$`BAF PE Species binary`
+) %>%
+  set_names(nm = c("FE","PE"))
+
+# Function to assign the isolate names of each dataset as 
+# column name
+
+assign_names <- function(x,y){
+  names(x) <- c("Species",y)
+  x
+}
+
+ast_hamming_BAF <- map2(
+  ast_hamming_BAF,
+  isolate_names_BAF,
+  ~ assign_names(.x,.y)
 )
 
-ast_hamming_BAF <- do.call("rbind", ast_hamming_BAF)
+# Might have to tidy data first, then merge, then untidy again
+
+ast_hamming_BAF_tidy <-
+  ast_hamming_BAF %>%
+  map_dfr(
+    ~ gather(.x,
+      key = Isolate,
+      value = hamming,
+      -Species
+    ),
+    .id = "Location"
+  )
+
+# Let's seriously consider map2 here to avoid repetition, 
+# or to work on a list of lists
 
 ast_hamming_CAS <- list(
   ast_hamming_species$`CAS FE Species binary`,
   ast_hamming_species$`CAS PE Species binary`
+) %>%
+  set_names(c("FE","PE"))
+
+ast_hamming_CAS <- map2(
+  ast_hamming_CAS,
+  isolate_names_CAS,
+  ~ assign_names(.x,.y)
 )
 
-ast_hamming_CAS
+ast_hamming_CAS_tidy <-
+  ast_hamming_CAS %>%
+  map_dfr(
+    ~ gather(.x,
+      key = Isolate,
+      value = hamming,
+      -Species
+    ),
+    .id = "Location"
+  )
+  
+# TODO: Address the following warning messages
+
+# Warning messages:
+# 1: In bind_rows_(x, .id) : Unequal factor levels: coercing to character
+# 2: In bind_rows_(x, .id) :
+#   binding character and factor vector, coercing into character vector
+# 3: In bind_rows_(x, .id) :
+#   binding character and factor vector, coercing into character vector
 
 # Generate heatmaps --------------------------------------------------------
 
@@ -177,7 +262,7 @@ ast_heatmaps <- imap(ast_profiles, function(x,y){
   hm
 })
 
-# Saving directly to the 
+# Saving directly to file
 
 iwalk(ast_profiles, function(x,y){
   heatmaply(x[c(2,4:15)],

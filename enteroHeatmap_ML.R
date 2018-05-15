@@ -4,9 +4,7 @@
 # install.packages("gplots")
 
 library(gplots)
-library(dplyr)
-library(purrr)
-library(stringr)
+library(tidyverse) # We will be using dplyr, purrr, and stringr
 library(heatmaply)
 
 # Read data ---------------------------------------------------------------
@@ -287,4 +285,12 @@ trace = "none" # Good that you removed this!
 #lmat=rbind(c(4, 3), c(2, 1)), lhei=c(0.3, 2), lwid=c(1.5, 4)
 # These are options to modify the layout. We can leave them commented out for now.
 )
+
+# Cluster analysis for Comparing Partitions -------------------------------
+
+# Purpose: extract clusters at all thresholds for analysis with the Comparing 
+# Partitions tool (http://www.comparingpartitions.info/)
+
+
+
 
