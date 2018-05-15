@@ -53,7 +53,7 @@ ast_binary_freqs <- ast_profiles %>%
 # This function uses matrix multiplication
 
 hamming <- function(x){
-  D <- (1-x) %*% t(x)
+  D <- (1-x) %*% t(x) # Matrix multiplication
   D + t(D)
 }
 
