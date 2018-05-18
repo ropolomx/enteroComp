@@ -163,18 +163,6 @@ ast_hamming_CAS <- data.frame(ast_profiles_CAS$Species,
 
 ast_hamming_CAS <- assign_names(ast_hamming_CAS, ast_profiles_CAS$Iso)
 
-
-# Converting Hamming datasets back to matrix format -----------------------
-
-# Purpose: requested by Haley to plot as heatmap
-
-ast_hamming_BAF_wide <-
-  ast_hamming_BAF_tidy %>%
-  spread(key = Isolate_x, value = hamming)
-
-# Result: Many columns with NA values because not all strains were retrieved
-# from both environments
-
 # Generate heatmaps --------------------------------------------------------
 
 # Preliminary step: order Species columns the same way for all datasets
