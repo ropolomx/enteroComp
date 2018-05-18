@@ -276,7 +276,7 @@ iwalk(ast_profiles, function(x,y){
 
 # Heatmaps of Hamming distances -------------------------------------------
 
-hamming_heatmap <- function(x){
+hamming_heatmap <- function(x, row_palette){
   heatmaply(
     x,
     dendrogram="both",
@@ -285,16 +285,40 @@ hamming_heatmap <- function(x){
     plot_method="plotly",
     fontsize_row = 8,
     fontsize_col = 8,
+    RowSideColors = row_palette,
     margins = c(45,NA,NA,NA)
   )
 }
 
-ast_hamming_hm <-list(
-  ast_hamming_BAF, 
-  ast_hamming_CAS
-) %>%
-  set_names(nm="BAF","CAS") %>%
-  map(hamming_heatmap)
+hamming_palettes <- list(
+  "BAF" = c(
+    "dark orange",
+    "light orange",
+    "red",
+    "pink",
+    "green",
+    "light green",
+    "dark blue",
+    "light blue"
+    ),
+  "CAS" = c(
+    "dark orange",
+    "light orange",
+    "green",
+    "light green",
+    "blue",
+    "light blue"
+  )
+)
+
+ast_hamming_hm <- map2(
+  list(
+  "BAF" = ast_hamming_BAF, 
+  "CAS" = ast_hamming_CAS
+  ),
+  hamming_palettes,
+  ~ hamming_heatmap(.x, .y)
+)
 
 
 # Generate UpSet figures --------------------------------------------------
