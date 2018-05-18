@@ -290,6 +290,8 @@ hamming_heatmap <- function(x, row_palette){
   )
 }
 
+# TODO: generate dataframe with colour assignment
+
 hamming_palettes <- list(
   "BAF" = c(
     "dark orange",
