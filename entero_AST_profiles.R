@@ -55,7 +55,7 @@ ast_profiles_BAF <- do.call("rbind", ast_profiles_BAF)
 
 ast_profiles_BAF <- 
   ast_profiles_BAF %>%
-  mutate(Location = str_replace(Location, "BAF ",""))
+  mutate(Location = str_replace(Location, "BAF\\s+",""))
 
 ast_profiles_CAS <- list(
   ast_profiles$`CAS FE Species binary`,
@@ -71,7 +71,7 @@ ast_profiles_CAS <- do.call("rbind", ast_profiles_CAS)
 
 ast_profiles_CAS <- 
   ast_profiles_CAS %>%
-  mutate(Location = str_replace(Location, "CAS ",""))
+  mutate(Location = str_replace(Location, "CAS\\s+",""))
 
 # Calculate Hamming distances on BAF and CAS lists
 
@@ -365,22 +365,24 @@ iwalk(ast_profiles, function(x,y){
 
 # Heatmaps of Hamming distances -------------------------------------------
 
-ast_hamming_heatmaps <- map2(
-  ast_hamming_species, 
-  ast_profiles, 
-  function(x,y){
-  hm <- heatmaply(x,
-                  dendrogram="both",
-                  hclust_method = "mcquitty",
-                  seriate = "mean",
-                  plot_method="plotly",
-                  margins = c(45,NA,NA,NA),
-                  # scale_fill_gradient_fun = scale_fill_gradient(low="black", high="red")
-                  labRow = y$Iso,
-                  labCol = y$Iso
-                  )
-  hm
-  })
+hamming_heatmap <- function(x){
+  heatmaply(
+    x,
+    dendrogram="both",
+    # hclust_method = "mcquitty",
+    # seriate = "mean",
+    plot_method="plotly",
+    margins = c(45,NA,NA,NA)
+  )
+}
+
+ast_hamming_hm <- map(
+  list(
+  ast_hamming_BAF, ast_hamming_CAS
+  ),
+  hamming_heatmap
+)
+
 
 # Generate UpSet figures --------------------------------------------------
 
