@@ -283,16 +283,18 @@ hamming_heatmap <- function(x){
     # hclust_method = "mcquitty",
     # seriate = "mean",
     plot_method="plotly",
+    fontsize_row = 8,
+    fontsize_col = 8,
     margins = c(45,NA,NA,NA)
   )
 }
 
-ast_hamming_hm <- map(
-  list(
-  ast_hamming_BAF, ast_hamming_CAS
-  ),
-  hamming_heatmap
-)
+ast_hamming_hm <-list(
+  ast_hamming_BAF, 
+  ast_hamming_CAS
+) %>%
+  set_names(nm="BAF","CAS") %>%
+  map(hamming_heatmap)
 
 
 # Generate UpSet figures --------------------------------------------------
