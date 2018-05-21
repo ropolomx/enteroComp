@@ -56,7 +56,7 @@ ast_profiles_BAF <- do.call("rbind", ast_profiles_BAF)
 
 ast_profiles_BAF <- 
   ast_profiles_BAF %>%
-  mutate(Location = str_replace(Location, "BAF ",""))
+  mutate(Location = str_replace(Location, "BAF\\s+",""))
 
 ast_profiles_CAS <- list(
   ast_profiles$`CAS FE Species binary`,
@@ -72,7 +72,7 @@ ast_profiles_CAS <- do.call("rbind", ast_profiles_CAS)
 
 ast_profiles_CAS <- 
   ast_profiles_CAS %>%
-  mutate(Location = str_replace(Location, "CAS ",""))
+  mutate(Location = str_replace(Location, "CAS\\s+",""))
 
 # Calculate Hamming distances on BAF and CAS lists
 
@@ -163,95 +163,6 @@ ast_hamming_CAS <- data.frame(ast_profiles_CAS$Species,
                               ast_hamming_CAS)
 
 ast_hamming_CAS <- assign_names(ast_hamming_CAS, ast_profiles_CAS$Iso)
-
-
-# Merge Hamming datasets using tidy methods -------------------------------
-
-# Might want consider using map2 here (and in other sections of the script)
-
-# Extract BAF datasets
-
-ast_hamming_BAF <- list(
-  ast_hamming_species$`BAF FE Species binary`,
-  ast_hamming_species$`BAF PE Species binary`
-) %>%
-  set_names(nm = c("FE","PE"))
-
-# Function to assign the isolate names of each dataset as 
-# column name
-
-assign_names <- function(x,y){
-  names(x) <- c("Species",y)
-  x$Isolate_y <- y # Isolate name y-axis,
-  x <- select(x, Species, Isolate_y, everything())
-  x
-}
-
-ast_hamming_BAF <- map2(
-  ast_hamming_BAF,
-  isolate_names_BAF,
-  ~ assign_names(.x,.y)
-)
-
-# Might have to tidy data first, then merge, then untidy again
-
-ast_hamming_BAF_tidy <-
-  ast_hamming_BAF %>%
-  map_dfr(
-    ~ gather(.x,
-      key = Isolate_x,
-      value = hamming,
-      -Species, -Isolate_y
-    ),
-    .id = "Location"
-  )
-
-# Let's seriously consider map2 here to avoid repetition, 
-# or to work on a list of lists
-
-ast_hamming_CAS <- list(
-  ast_hamming_species$`CAS FE Species binary`,
-  ast_hamming_species$`CAS PE Species binary`
-) %>%
-  set_names(c("FE","PE"))
-
-ast_hamming_CAS <- map2(
-  ast_hamming_CAS,
-  isolate_names_CAS,
-  ~ assign_names(.x,.y)
-)
-
-ast_hamming_CAS_tidy <-
-  ast_hamming_CAS %>%
-  map_dfr(
-    ~ gather(.x,
-      key = Isolate_x,
-      value = hamming,
-      -Species, -Isolate_y
-    ),
-    .id = "Location"
-  )
-  
-# TODO: Address the following warning messages
-
-# Warning messages:
-# 1: In bind_rows_(x, .id) : Unequal factor levels: coercing to character
-# 2: In bind_rows_(x, .id) :
-#   binding character and factor vector, coercing into character vector
-# 3: In bind_rows_(x, .id) :
-#   binding character and factor vector, coercing into character vector
-
-
-# Converting Hamming datasets back to matrix format -----------------------
-
-# Purpose: requested by Haley to plot as heatmap
-
-ast_hamming_BAF_wide <-
-  ast_hamming_BAF_tidy %>%
-  spread(key = Isolate_x, value = hamming)
-
-# Result: Many columns with NA values because not all strains were retrieved
-# from both environments
 
 # Generate heatmaps --------------------------------------------------------
 
@@ -366,22 +277,52 @@ iwalk(ast_profiles, function(x,y){
 
 # Heatmaps of Hamming distances -------------------------------------------
 
-ast_hamming_heatmaps <- map2(
-  ast_hamming_species, 
-  ast_profiles, 
-  function(x,y){
-  hm <- heatmaply(x,
-                  dendrogram="both",
-                  hclust_method = "mcquitty",
-                  seriate = "mean",
-                  plot_method="plotly",
-                  margins = c(45,NA,NA,NA),
-                  # scale_fill_gradient_fun = scale_fill_gradient(low="black", high="red")
-                  labRow = y$Iso,
-                  labCol = y$Iso
-                  )
-  hm
-  })
+hamming_heatmap <- function(x, row_palette){
+  heatmaply(
+    x,
+    dendrogram="both",
+    # hclust_method = "mcquitty",
+    # seriate = "mean",
+    plot_method="plotly",
+    fontsize_row = 8,
+    fontsize_col = 8,
+    RowSideColors = row_palette,
+    margins = c(45,NA,NA,NA)
+  )
+}
+
+# TODO: generate dataframe with colour assignment
+
+hamming_palettes <- list(
+  "BAF" = c(
+    "dark orange",
+    "light orange",
+    "red",
+    "pink",
+    "green",
+    "light green",
+    "dark blue",
+    "light blue"
+    ),
+  "CAS" = c(
+    "dark orange",
+    "light orange",
+    "green",
+    "light green",
+    "blue",
+    "light blue"
+  )
+)
+
+ast_hamming_hm <- map2(
+  list(
+  "BAF" = ast_hamming_BAF, 
+  "CAS" = ast_hamming_CAS
+  ),
+  hamming_palettes,
+  ~ hamming_heatmap(.x, .y)
+)
+
 
 # Generate UpSet figures --------------------------------------------------
 
