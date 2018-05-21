@@ -1,14 +1,15 @@
 
 # Load packages -----------------------------------------------------------
 
-library(readxl)
 library(tidyverse)
+library(readxl)
 library(heatmaply)
 library(UpSetR)
+library(here)
 
 # Read data ---------------------------------------------------------------
 
-ast_path <- 'data/Isolates_with_Binary_AMR phenotype_Jan292018.xlsx'
+ast_path <- here('data','Isolates_with_Binary_AMR phenotype_Jan292018.xlsx')
 
 # Read all sheets in Excel file
 
@@ -49,7 +50,7 @@ ast_profiles_BAF <- list(
 
 ast_profiles_BAF$FE <- 
   ast_profiles_BAF$FE %>%
-  rename(AMPI = AMPR)
+  rename(AMPI = AMPR) # Depends on which version of data 
 
 ast_profiles_BAF <- do.call("rbind", ast_profiles_BAF)
 
