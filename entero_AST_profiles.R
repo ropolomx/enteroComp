@@ -323,6 +323,17 @@ ast_hamming_hm <- map2(
   ~ hamming_heatmap(.x, .y)
 )
 
+heatmaply(ast_hamming_BAF, 
+  plot_method = "plotly", 
+  fontsize_col = 6,
+  fontsize_row = 6
+)
+
+heatmaply(ast_hamming_CAS, 
+  plot_method = "plotly", 
+  fontsize_col = 6,
+  fontsize_row = 6
+)
 
 # Generate UpSet figures --------------------------------------------------
 
