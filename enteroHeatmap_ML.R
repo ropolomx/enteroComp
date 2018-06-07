@@ -241,7 +241,7 @@ hc_dist_groel_gapped <- hclust(dist_groel_gapped, method = "complete")
 
 clusters_groel <- cutree(hc_dist_groel_gapped, h = all_dists)
 
-write.csv(clusters_groel, file = 'clusters_at_all_SNP_thresholds.csv')
+write.csv(clusters_groel, file = here('cluster_analysis', 'clusters_at_all_SNP_thresholds.csv'))
 
 clusters_groel_species <- cutree(hc_dist_groel_gapped, k = 7)
 
@@ -286,4 +286,4 @@ all_flat_clusters_df <-
 butter_spread <- spread(all_flat_clusters_df, key = Scheme, value = Cluster)
 butter_spread <- butter_spread[match(metadata$Iso, butter_spread$Iso),]
 butter_spread <- butter_spread %>% na.omit()
-write.csv(butter_spread, 'all_seven_clusters.csv', row.names = FALSE, quote = FALSE)
+write.csv(butter_spread, here('cluster_analysis', 'all_seven_clusters.csv', row.names = FALSE, quote = FALSE)
