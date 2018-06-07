@@ -49,8 +49,8 @@ ast_profiles_BAF <- list(
   set_names(nm = c("FE", "PE"))
 
 ast_profiles_BAF$FE <- 
-  ast_profiles_BAF$FE %>%
-  rename(AMPI = AMPR) # Depends on which version of data 
+  ast_profiles_BAF$FE
+  # rename(AMPI = AMPR) # Depends on which version of data 
 
 ast_profiles_BAF <- do.call("rbind", ast_profiles_BAF)
 
