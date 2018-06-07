@@ -148,6 +148,12 @@ allSNPdf$atpa_gapped <- allSNPdf$atpa_gapped[-26,-27]
 
 allSNPdf$pheS_gapped <- allSNPdf$pheS_gapped[-176,-177]
 
+allSNPdf <- map(allSNPdf, function(x) {
+  df <- x %>%
+    mutate(Iso = make.names(Iso))
+  df
+})
+
 
 # Merge isolate metadata with SNP distances -------------------------------
 
@@ -163,11 +169,11 @@ allSNPdfMeta <- map(allSNPdfMeta, function(x){
     rename(Species=`Final ID`)
 })
 
+allSNPdfMetaSub <- discard(allSNPdfMeta, str_detect(names(allSNPdfMeta), "ungapped"))
+
 # Generate all heatmaps ---------------------------------------------------
 
-all_SNPdf_Meta_Sub <- discard(allSNPdfMeta, str_detect(names(allSNPdfMeta), "ungapped"))
-
-allSNPdfHeatmaps <- imap(all_SNPdf_Meta_Sub, function(x,y){
+allSNPdfHeatmaps <- imap(allSNPdf_MetaSub, function(x,y){
   hm <- heatmaply(x, 
                   dendrogram = "both",
                   plot_method = "plotly",
@@ -204,16 +210,13 @@ allSNPdfHeatmaps %>%
      ~ htmlwidgets::saveWidget(as_widget(.x), paste0(here("snp_heatmaps/"),.y,".html"))
   )
 
-# Cluster analysis for Comparing Partitions -------------------------------
+
+# Cluster analysis for Comparing Partitions: one example ------------------
 
 # Purpose: extract clusters at all thresholds for analysis with the Comparing 
 # Partitions tool (http://www.comparingpartitions.info/)
 
 # Example with one dataset
-
-groel_gapped <- read.csv(here('data', 'SNP_table_groel_gapped_jan122018.csv'))
-
-row.names(groel_gapped) <- groel_gapped$X
 
 groel_gapped <- groel_gapped[,2:ncol(groel_gapped)]
 
@@ -230,8 +233,9 @@ all_dists <- unique(as.vector(dist_groel_gapped))
 
 hc_dist_groel_gapped <- hclust(dist_groel_gapped, method = "complete")
 
-clusters_groel_strains <- metadata[match(hc_dist_groel_gapped$labels, metadata$Iso),]
+# clusters_groel_strains <- metadata[match(hc_dist_groel_gapped$labels, metadata$Iso),]
 
+# write.csv(clusters_groel_strains, 'reference_clusters.csv')
 
 # hc_dist_groel_gapped$labels <- hc_dist_groel_gapped$labels[hc_dist_groel_gapped$order]
 
@@ -250,11 +254,36 @@ clusters_groel_sum <- data.frame(
   clusters = clusters_groel_sum
 )
 
+# Cluster analysis for Comparing Partitions: in batch ---------------------
+
+all_dists <-
+  allSNPdfMetaSub %>%
+  map( ~ (.x[, 2:ncol(.x)] %>%
+      as.dist(.)))
+
+all_clusts <-
+  all_dists %>%
+  map( ~ (hclust(.x, method = "complete")))
+
+all_flat_clusters <-
+  all_clusts %>%
+  map( ~ (cutree(.x, k = 7))) # Check for high and low thresholds
+
+all_flat_clusters_df <-
+  all_flat_clusters %>%
+  map( ~ enframe(.x, name = "Iso", value = "Cluster"))
+
+# all_flat_clusters_df <-
+#   all_flat_clusters_df %>%
+#   map(~ .x[match(metadata$Iso, .x$Iso), ] %>%
+#       na.omit())
+
+all_flat_clusters_df <-
+  all_flat_clusters_df %>%
+  map_dfr(~ left_join(.x, metadata,by="Iso"), .id = 'Scheme')
 
 
-
-
-
-
-
-
+butter_spread <- spread(all_flat_clusters_df, key = Scheme, value = Cluster)
+butter_spread <- butter_spread[match(metadata$Iso, butter_spread$Iso),]
+butter_spread <- butter_spread %>% na.omit()
+write.csv(butter_spread, 'all_seven_clusters.csv', row.names = FALSE, quote = FALSE)
