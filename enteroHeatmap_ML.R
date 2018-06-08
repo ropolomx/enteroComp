@@ -252,7 +252,8 @@ clusters_groel_sum <- apply(clusters_groel, 2, max)
 clusters_groel_sum <- data.frame(
   distances = as.numeric(names(clusters_groel_sum)),
   clusters = clusters_groel_sum
-)
+) %>%
+  arrange(distances)
 
 # Cluster analysis for Comparing Partitions: in batch ---------------------
 
