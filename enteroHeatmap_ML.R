@@ -6,6 +6,7 @@
 library(gplots)
 library(tidyverse) # We will be using dplyr, purrr, and stringr
 library(heatmaply)
+library(gplots)
 library(here)
 
 # Read data ---------------------------------------------------------------
@@ -173,20 +174,21 @@ allSNPdfMetaSub <- discard(allSNPdfMeta, str_detect(names(allSNPdfMeta), "ungapp
 
 # Generate all heatmaps ---------------------------------------------------
 
-allSNPdfHeatmaps <- imap(allSNPdf_MetaSub, function(x,y){
-  hm <- heatmaply(x, 
-                  dendrogram = "both",
-                  plot_method = "plotly",
-                  main = y,
-                  # margins = c(50,32,NA,11),
-                  fontsize_row = 8,
-                  fontsize_col = 11,
-                  column_text_angle = 45,
-                  key.title = "SNP distance",
-                  # colorbar_xpos = -1,
-                  colorbar_ypos = 2,
-                  showticklabels = FALSE
-         )
+allSNPdfHeatmaps <- imap(allSNPdfMetaSub, function(x, y) {
+  hm <- heatmaply(
+    x,
+    dendrogram = "both",
+    plot_method = "plotly",
+    main = y,
+    # margins = c(50,32,NA,11),
+    fontsize_row = 8,
+    fontsize_col = 11,
+    column_text_angle = 45,
+    key.title = "SNP distance",
+    # colorbar_xpos = -1,
+    colorbar_ypos = 2,
+    showticklabels = FALSE
+  )
   hm
 })
 

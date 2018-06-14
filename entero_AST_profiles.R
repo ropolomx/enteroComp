@@ -3,6 +3,7 @@
 
 library(tidyverse)
 library(readxl)
+library(gplots)
 library(heatmaply)
 library(UpSetR)
 library(here)
@@ -164,7 +165,8 @@ ast_hamming_CAS <- data.frame(ast_profiles_CAS$Species,
 
 ast_hamming_CAS <- assign_names(ast_hamming_CAS, ast_profiles_CAS$Iso)
 
-# Generate heatmaps --------------------------------------------------------
+
+# Generate binary heatmaps ------------------------------------------------
 
 # Preliminary step: order Species columns the same way for all datasets
 # This is to get the same colour scheme in all the plots
@@ -213,48 +215,203 @@ ast_profiles$`CAS PE Species binary`$Species <-
 # Will attempt to generate separately due to color schemes
 # TODO: customize rowside colors
 
-custom_heatmaply <- function(profile, title, colScale){
-  heatmaply(profile[c(2,4:15)],
-            dendrogram="both",
-            seriate = "mean",
-            plot_method = "plotly",
-            hclust_method = "average",
-            margins = c(45,32,NA,11),
-            fontsize_row = 8,
-            fontsize_col = 13,
-            main = title,
-            RowSideColors = colScale,
-            hide_colorbar = TRUE,
-            labRow=profile$Iso
-  )}
+all_species <- map(ast_profiles, ~ unique(as.character(.x$Species))) %>% 
+  flatten_chr(.) %>% 
+  unique(.)
 
-ast_heatmap_baf_fe <- custom_heatmaply(
-  ast_profiles$`BAF FE Species binary`,
-  "BAF FE Species",
-  c("light blue",
+colorscale <- data.frame(
+  Species = all_species,
+  color = c(
+    "forest green", 
+    "red",
+    "royal blue",
     "light green",
-    "green",
-    "pink")
+    "magenta",
+    "orange")
   )
+
+
+assign_colors <- function(x) {
+  species_col <- x %>% select(Species)
+  merged_colors <- left_join(species_col, colorscale, by = "Species") %>%
+    select(-Species)
+  # merged_colors <- as.character(merged_colors$color)
+}
+
+all_colors <- 
+  ast_profiles %>%
+  map(
+    ~ assign_colors(.x)
+  )
+
+# custom_heatmaply <- function(profile, colScale){
+#   heatmaply(profile[c(2,4:15)],
+#             dendrogram="both",
+#             seriate = "mean",
+#             plot_method = "plotly",
+#             hclust_method = "average",
+#             margins = c(45,32,NA,11),
+#             fontsize_row = 8,
+#             fontsize_col = 13,
+#             main = title,
+#             RowSideColors = colScale,
+#             hide_colorbar = TRUE,
+#             labRow=profile$Iso
+#   )}
+
+# ast_heatmap_baf_fe <- custom_heatmaply(
+#   ast_profiles$`BAF FE Species binary`,
+#   "BAF FE Species",
+#   c("light blue",
+#     "light green",
+#     "green",
+#     "pink")
+#   )
 
 # Map function to generate All heatmaps
 
-ast_heatmaps <- imap(ast_profiles, function(x,y){
-  hm <- heatmaply(x[c(2,4:15)],
-                  dendrogram="both",
-                  seriate = "mean",
-                  plot_method = "plotly",
-                  hclust_method = "average",
-                  main = y,
-                  margins = c(45,32,NA,11),
-                  fontsize_row = 7,
-                  fontsize_col = 10,
-                  # row_side_palette = c(
-                  hide_colorbar = TRUE,
-                  labRow=x$Iso
-                  )
+ast_profiles_merged <- map2(
+  ast_profiles,
+  all_colors,
+  ~ cbind(.x,.y) %>% select(color, everything())
+)
+
+all_colors <- 
+  all_colors %>%
+  map(~ as.character(.x$color))
+
+binary_heatmap <- function(profile){
+  hm <- heatmaply(profile[c(3,5:16)],
+    dendrogram="both",
+    seriate = "mean",
+    plot_method = "ggplot",
+    hclust_method = "average",
+    margins = c(45,32,NA,11),
+    fontsize_row = 7,
+    fontsize_col = 10,
+    RowSideColors = profile$color,
+    hide_colorbar = TRUE,
+    labRow=profile$Iso
+  )
   hm
-})
+}
+
+ast_heatmaps <- map(
+  ast_profiles_merged,
+  # all_colors,
+  ~ binary_heatmap(.x)
+)
+
+
+build_ast_dend <- function(profile){
+  profile_mat <- as.matrix(profile[,5:16])
+  rownames(profile_mat) <- profile$Iso
+  profile_dist <- dist(profile_mat, method = "manhattan")
+  profile_hc <- hclust(profile_dist, method = "average")
+  profile_dend <- reorder(as.dendrogram(profile_hc), rowMeans(profile_mat))
+  profile_dist_trans <- dist(t(profile_mat), method = "manhattan")
+  profile_hc_trans <- hclust(profile_dist_trans, method = "average")
+  profile_dend_trans <- reorder(as.dendrogram(profile_hc_trans), colMeans(profile_mat))
+  return(
+    list(
+    "mat" = profile_mat,
+    "row_dend" = profile_dend, 
+    "col_dend" = profile_dend_trans
+    )
+  )
+}
+
+# baf_pe_dends <- build_ast_dend(ast_profiles_merged$`BAF PE Species binary`)
+# 
+# ast_hm_BAF_PE_mat <- as.matrix(ast_profiles_merged$`BAF PE Species binary`[,5:16])
+# rownames(ast_hm_BAF_PE_mat) <- ast_profiles_merged$`BAF PE Species binary`$Iso
+# ast_hm_BAF_PE_dist <- dist(ast_hm_BAF_PE_mat, "manhattan")
+# ast_hm_BAF_PE_hc <- hclust(ast_hm_BAF_PE_dist, method = "average")
+# ast_hm_BAF_PE_dend <- reorder(as.dendrogram(ast_hm_BAF_PE_hc),rowMeans(ast_hm_BAF_PE_mat))
+# ast_hm_BAF_PE_dist_trans <- dist(t(ast_hm_BAF_PE_mat), "manhattan")
+# ast_hm_BAF_PE_hc_trans <- hclust(ast_hm_BAF_PE_dist_trans, method = "average")
+# ast_hm_BAF_PE_dend_trans <- reorder(as.dendrogram(ast_hm_BAF_PE_hc_trans), colMeans(ast_hm_BAF_PE_mat))
+
+# baf_pe_colors <- as.character(ast_profiles_merged$`BAF PE Species binary`$color)
+
+binary_heatmap.2 <- function(mat, row_dend, col_dend, colscale,leg,leg_col) {
+  heatmap.2(mat,
+    Rowv = row_dend,
+    Colv = col_dend,
+    trace = "none", 
+    col = viridis(n = 256, alpha = 1, begin = 0, end= 1, option = "viridis"), 
+    RowSideColors = colscale,
+    lwid = c(2.5,4.0,1.5),
+    lhei = c(1.5,5),
+    cexRow = 0.75,
+    # margins = c(2,2.5),
+    # RowSideColors = as.character(ast_profiles_merged$`BAF PE Species binary`$color),
+    key = FALSE
+  )
+  legend(list(x=0.0003023889,y=0.99999),
+    legend = leg,
+    fill = leg_col)
+}
+
+all_species_vec <- map(ast_profiles, ~ unique(as.character(.x$Species)) %>% sort(.))
+colorscale <- colorscale %>% arrange(Species)
+color_maps <- map(all_species_vec, ~ colorscale$color[colorscale$Species %in% .x])
+color_maps <- map(color_maps, ~ as.character(.x))
+
+ast_binary_mats <- 
+  ast_profiles_merged %>%
+  map(~ build_ast_dend(.x))
+
+
+pwalk(
+  list(ast_binary_mats, 
+  all_colors,
+  all_species_vec,
+  color_maps),
+  function(a,b,c,d) binary_heatmap.2(
+    a$mat,
+    a$row_dend,
+    a$col_dend, 
+    b,
+    c,
+    d
+  )
+) 
+
+binary_heatmap.2(ast_binary_mats$`BAF FE Species binary`$mat,
+  ast_binary_mats$`BAF FE Species binary`$row_dend,
+  ast_binary_mats$`BAF FE Species binary`$col_dend,
+  all_colors$`BAF FE Species binary`,
+  all_species_vec$`BAF FE Species binary`,
+  color_maps$`BAF FE Species binary`)
+
+heatmap.2(baf_pe_dends$mat,
+  Rowv = baf_pe_dends$row_dend,
+  Colv = baf_pe_dends$col_dend,
+  trace = "none", 
+  col = viridis(n = 256, alpha = 1, begin = 0, end= 1, option = "viridis"), 
+  RowSideColors = baf_pe_colors,
+  # RowSideColors = as.character(ast_profiles_merged$`BAF PE Species binary`$color),
+  key = FALSE
+)
+
+
+
+
+ast_hm_BAF_PE <- heatmaply(ast_profiles_merged$`BAF PE Species binary`[c(3,5:16)],
+  dendrogram="both",
+  seriate = "mean",
+  plot_method = "ggplot",
+  hclust_method = "average",
+  margins = c(45,32,NA,11),
+  fontsize_row = 7,
+  fontsize_col = 10,
+  row_side_colors = as.character(ast_profiles_merged$`BAF PE Species binary`$color),
+  # hide_colorbar = TRUE,
+  labRow = ast_profiles_merged$`BAF PE Species binary`$Iso
+)
+  
+
 
 # Saving directly to file
 
