@@ -281,7 +281,7 @@ all_colors <-
   map(~ as.character(.x$color))
 
 binary_heatmap <- function(profile){
-  hm <- heatmaply(profile[c(3,5:16)],
+  hm <- heatmaply_na(profile[c(3,5:16)],
     dendrogram="both",
     seriate = "mean",
     plot_method = "ggplot",
@@ -339,7 +339,7 @@ binary_heatmap.2 <- function(mat, row_dend, col_dend, colscale,leg,leg_col) {
     Rowv = row_dend,
     Colv = col_dend,
     trace = "none", 
-    col = viridis(n = 256, alpha = 1, begin = 0, end= 1, option = "viridis"), 
+    col = rev(viridis(n = 2, alpha = 1, begin = 0, end= 1, option = "magma")), 
     RowSideColors = colscale,
     lwid = c(2.5,4.0,1.5),
     lhei = c(1.5,5),
