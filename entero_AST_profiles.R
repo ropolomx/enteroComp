@@ -437,6 +437,7 @@ iwalk(ast_profiles, function(x,y){
 hamming_heatmap <- function(x, row_palette){
   heatmaply(
     x,
+    colors = viridis(n = 256, alpha = 1, option = "cividis"),
     dendrogram="both",
     # hclust_method = "mcquitty",
     # seriate = "mean",
@@ -480,13 +481,17 @@ ast_hamming_hm <- map2(
   ~ hamming_heatmap(.x, .y)
 )
 
-heatmaply(ast_hamming_BAF, 
-  plot_method = "plotly", 
+heatmaply(ast_hamming_BAF,
+  colors = viridis(n = 256, alpha = 1, option = "cividis"),
+  plot_method = "plotly",
   fontsize_col = 6,
   fontsize_row = 6
 )
 
 heatmaply(ast_hamming_CAS, 
+  colors = viridis(n = 256, alpha = 1, option = "cividis"),
+  hclust_method = "mcquitty",
+  seriate = "mean",
   plot_method = "plotly", 
   fontsize_col = 6,
   fontsize_row = 6
