@@ -5,12 +5,13 @@ library(tidyverse)
 library(readxl)
 library(gplots)
 library(heatmaply)
+library(e1071)
 library(UpSetR)
 library(here)
 
 # Read data ---------------------------------------------------------------
 
-ast_path <- here('data','Isolates_with_Binary_AMR phenotype_Jan292018.xlsx')
+ast_path <- here('data','Final Isolates with Binary AMR phenotype teic correct July132018 .xlsx')
 
 # Read all sheets in Excel file
 
@@ -21,8 +22,8 @@ ast_profiles <- ast_path %>%
 
 # Pre-process data --------------------------------------------------------
 
-# Drop first data frame from list
-ast_profiles <- ast_profiles[-1]
+# Select profiles
+ast_profiles <- ast_profiles[2:6]
 
 # Remove all rows with NA values
 ast_profiles <- lapply(ast_profiles, function(x){
@@ -33,6 +34,10 @@ ast_profiles <- lapply(ast_profiles, function(x){
 
 ast_profiles <- lapply(ast_profiles, function(x) {
   x <- x %>%
+    mutate(Species = str_replace(
+      Species, 
+      "^E\\. casseliflavus\\/E\\.gallinarum", 
+      "E. casseliflavus\\/E. gallinarum")) %>%
     mutate(Species = str_replace(
       Species,
       "^E. (casseliflavus$|gallinarum$|casseliflvaus$)",
@@ -50,8 +55,8 @@ ast_profiles_BAF <- list(
   set_names(nm = c("FE", "PE"))
 
 ast_profiles_BAF$FE <- 
-  ast_profiles_BAF$FE
-  # rename(AMPI = AMPR) # Depends on which version of data 
+  ast_profiles_BAF$FE %>%
+  rename(AMPI = AMPR) # Depends on which version of data 
 
 ast_profiles_BAF <- do.call("rbind", ast_profiles_BAF)
 
@@ -67,7 +72,7 @@ ast_profiles_CAS <- list(
 
 ast_profiles_CAS$FE <- 
   ast_profiles_CAS$FE %>%
-  rename(TEIC = TERC)
+  rename(TEIC = TERC) # Depends on which version of the data
 
 ast_profiles_CAS <- do.call("rbind", ast_profiles_CAS)
 
@@ -132,8 +137,11 @@ ast_hamming_BAF <- hamming(as.matrix(ast_profiles_BAF[4:15]))
 ast_hamming_CAS <- hamming(as.matrix(ast_profiles_CAS[4:15]))
   
 # Another option from e1071 package:
-# ast_hamming_e1071 <- ast_profiles[2:5] %>%
-#   map(~ hamming.distance(as.matrix(.x[4:15])))
+ast_hamming_e1071 <- ast_profiles[2:5] %>%
+   map(~ hamming.distance(as.matrix(.x[4:15])))
+
+ast_hamming_e1071_BAF <- hamming.distance(as.matrix(ast_profiles_BAF[4:15]))
+ast_hamming_e1071_CAS <- hamming.distance(as.matrix(ast_profiles_CAS[4:15]))
 
 # Create list with Species names for heatmaps
 
@@ -153,17 +161,17 @@ assign_names <- function(x,y){
   x
 }
 
-ast_hamming_BAF <- data.frame(ast_profiles_BAF$Species, 
-                              ast_profiles_BAF$Location,
-                              ast_hamming_BAF)
+ast_hamming_e1071_BAF <- data.frame(ast_profiles_BAF$Species,
+  ast_profiles_BAF$Location,
+  ast_hamming_e1071_BAF)
 
-ast_hamming_BAF <- assign_names(ast_hamming_BAF, ast_profiles_BAF$Iso)
+ast_hamming_e1071_BAF <- assign_names(ast_hamming_e1071_BAF, ast_profiles_BAF$Iso)
 
-ast_hamming_CAS <- data.frame(ast_profiles_CAS$Species, 
+ast_hamming_e1071_CAS <- data.frame(ast_profiles_CAS$Species, 
                               ast_profiles_CAS$Location,
-                              ast_hamming_CAS)
+                              ast_hamming_e1071_CAS)
 
-ast_hamming_CAS <- assign_names(ast_hamming_CAS, ast_profiles_CAS$Iso)
+ast_hamming_e1071_CAS <- assign_names(ast_hamming_e1071_CAS, ast_profiles_CAS$Iso)
 
 
 # Generate binary heatmaps ------------------------------------------------
@@ -281,7 +289,7 @@ all_colors <-
   map(~ as.character(.x$color))
 
 binary_heatmap <- function(profile){
-  hm <- heatmaply_na(profile[c(3,5:16)],
+  hm <- heatmaply(profile[c(2,4:16)],
     dendrogram="both",
     seriate = "mean",
     plot_method = "ggplot",
@@ -289,15 +297,15 @@ binary_heatmap <- function(profile){
     margins = c(45,32,NA,11),
     fontsize_row = 7,
     fontsize_col = 10,
-    RowSideColors = profile$color,
-    hide_colorbar = TRUE,
+    # RowSideColors = profile$color,
+    hide_colorbar = FALSE,
     labRow=profile$Iso
   )
   hm
 }
 
 ast_heatmaps <- map(
-  ast_profiles_merged,
+  ast_profiles,
   # all_colors,
   ~ binary_heatmap(.x)
 )
@@ -339,16 +347,30 @@ binary_heatmap.2 <- function(mat, row_dend, col_dend, colscale,leg,leg_col) {
     Rowv = row_dend,
     Colv = col_dend,
     trace = "none", 
-    col = rev(viridis(n = 2, alpha = 1, begin = 0, end= 1, option = "magma")), 
+    col = rev(viridis(n = 3, alpha = 1, begin = 0, end= 1, direction = -1, option = "D")),
     RowSideColors = colscale,
-    lwid = c(2.5,4.0,1.5),
-    lhei = c(1.5,5),
+    lwid = c(2.5,2.05,1.5),
+    lhei = c(1.5,7),
+    # lmat = rbind(c(0,3),c(2,1),c(0,4)),
+    # lwid = c(1.5,4),
+    # lhei = c(1.5,4,1),
     cexRow = 0.75,
-    # margins = c(2,2.5),
+    # margins = c(1,2.5),
     # RowSideColors = as.character(ast_profiles_merged$`BAF PE Species binary`$color),
-    key = FALSE
+    key = TRUE,
+    # keysize=0.25,
+    # breaks = c(-1,0,1,2),
+    # key.par = list(cex=0.5),
+    # key.xtickfun = seq(0,2,1),
+    density.info = "none"
   )
-  legend(list(x=0.0003023889,y=0.99999),
+  legend(list(
+    # x=0.0004023889,
+    x = 0.00000004,
+    # y = 0.9644889
+    y = 0.899999
+    ),
+    cex = 0.85,
     legend = leg,
     fill = leg_col)
 }
@@ -474,24 +496,26 @@ hamming_palettes <- list(
 
 ast_hamming_hm <- map2(
   list(
-  "BAF" = ast_hamming_BAF, 
-  "CAS" = ast_hamming_CAS
+  "BAF" = ast_hamming_e1071_BAF, 
+  "CAS" = ast_hamming_e1071_CAS
   ),
   hamming_palettes,
   ~ hamming_heatmap(.x, .y)
 )
 
-heatmaply(ast_hamming_BAF,
+heatmaply(ast_hamming_e1071_BAF,
   colors = viridis(n = 256, alpha = 1, option = "cividis"),
+  # hclust_method = "mcquitty",
+  # seriate = "mean",
   plot_method = "plotly",
   fontsize_col = 6,
   fontsize_row = 6
 )
 
-heatmaply(ast_hamming_CAS, 
+heatmaply(ast_hamming_e1071_CAS, 
   colors = viridis(n = 256, alpha = 1, option = "cividis"),
-  hclust_method = "mcquitty",
-  seriate = "mean",
+  hclust_method = "single",
+  # seriate = "mean",
   plot_method = "plotly", 
   fontsize_col = 6,
   fontsize_row = 6
@@ -505,10 +529,11 @@ binaries <- map(ast_profiles, function(x){
 })
 
 names(binaries) <- c("BAF FE", "BAF PE", "CAS FE", "CAS PE", "Biomass")
+# names(binaries) <- c("BAF FE", "BAF PE", "CAS FE", "CAS PE")
   
 upset(fromList(binaries),
       order.by = "freq",
-      mainbar.y.label = "Shared Binary Profiles",
+      mainbar.y.label = "Shared AST Profiles",
       # empty.intersections = TRUE,
       point.size = 3.2,
       text.scale=c(2,2,2,1.5,2))
