@@ -514,7 +514,7 @@ heatmaply(ast_hamming_e1071_BAF,
 
 heatmaply(ast_hamming_e1071_CAS, 
   colors = viridis(n = 256, alpha = 1, option = "cividis"),
-  hclust_method = "single",
+  # hclust_method = "average",
   # seriate = "mean",
   plot_method = "plotly", 
   fontsize_col = 6,
