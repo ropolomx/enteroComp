@@ -75,15 +75,3 @@ pheatmap(binary_matrices$Fecal,
          # annotation_row = annotation_rows$Fecal,
          fontsize_row = 8
          )
-
-# Change annotation colorscheme
-
-# First, investigate how many unique sources we have
-
-length(unique(annotation_rows$Fecal$Source))
-# 15
-
-ann_colors <- list(
-  
-)
-
