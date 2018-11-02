@@ -65,7 +65,20 @@ rownames(annotation_rows$Fecal) <- binary_profiles$Fecal$Isolates
 
 pheatmap(binary_matrices$Fecal,
          color = viridis::cividis(n=2),
-         legend = FALSE,
+         legend = T,
+         border_color = NA,
+         cellwidth = 50,
+         cellheight = 6,
+         clustering_distance_rows = "manhattan",
+         clustering_distance_cols = "manhattan",
+         clustering_method = "average",
+         annotation_row = annotation_rows$Fecal,
+         fontsize_row = 8
+         )
+
+pheatmap(binary_matrices$`Well water`,
+         color = viridis::cividis(n=2),
+         legend = T,
          border_color = NA,
          cellwidth = 50,
          cellheight = 6,
@@ -74,7 +87,7 @@ pheatmap(binary_matrices$Fecal,
          clustering_method = "average",
          # annotation_row = annotation_rows$Fecal,
          fontsize_row = 8
-         )
+)
 
 # Change annotation colorscheme
 
