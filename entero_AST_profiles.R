@@ -192,7 +192,7 @@ ast_profiles$`BAF PE Species binary`$Species <-
   factor(as.factor(ast_profiles$`BAF PE Species binary`$Species),
          levels = c("E. faecium",
                     "E. faecalis",
-                    "E. hirae",
+                    #"E. hirae",
                     "E. casseliflavus/E. gallinarum",
                     "E. mundtii",
                     "E. saccharolyticus"
@@ -347,7 +347,7 @@ binary_heatmap.2 <- function(mat, row_dend, col_dend, colscale,leg,leg_col) {
     Rowv = row_dend,
     Colv = col_dend,
     trace = "none", 
-    col = rev(viridis(n = 3, alpha = 1, begin = 0, end= 1, direction = -1, option = "D")),
+    col = rev(viridis(n = 3, alpha = 1, begin = 0, end= 1, direction = -1, option = "C")),
     RowSideColors = colscale,
     lwid = c(2.5,2.05,1.5),
     lhei = c(1.5,7),
@@ -423,7 +423,8 @@ heatmap.2(baf_pe_dends$mat,
 ast_hm_BAF_PE <- heatmaply(ast_profiles_merged$`BAF PE Species binary`[c(3,5:16)],
   dendrogram="both",
   seriate = "mean",
-  plot_method = "ggplot",
+  plot_method = "plotly",
+  colors = rev(viridis(n = 3, alpha = 1, begin = 0, end= 1, direction = -1, option = "E")),
   hclust_method = "average",
   margins = c(45,32,NA,11),
   fontsize_row = 7,
@@ -505,7 +506,7 @@ ast_hamming_hm <- map2(
 
 heatmaply(ast_hamming_e1071_BAF,
   colors = viridis(n = 256, alpha = 1, option = "cividis"),
-  # hclust_method = "mcquitty",
+  hclust_method = "ward.D",
   # seriate = "mean",
   plot_method = "plotly",
   fontsize_col = 6,
@@ -514,12 +515,46 @@ heatmaply(ast_hamming_e1071_BAF,
 
 heatmaply(ast_hamming_e1071_CAS, 
   colors = viridis(n = 256, alpha = 1, option = "cividis"),
-  # hclust_method = "average",
+  hclust_method = "average",
   # seriate = "mean",
   plot_method = "plotly", 
   fontsize_col = 6,
   fontsize_row = 6
 )
+
+
+# Circlize figures with Hamming distances ---------------------------------
+
+library(circlize)
+
+ast_hamming_e1071_BAF$isolate2 <- row.names(ast_hamming_e1071_BAF)
+
+ast_hamming_e1071_BAF$Species2 <- ast_hamming_e1071_BAF$Species
+
+
+tidy_baf_hamming <- pivot_longer(ast_hamming_e1071_BAF,cols = R1:R337, 
+                                 names_to = "isolate", values_to = "hamming")
+
+
+baf_hamming_mat <- as.matrix(ast_hamming_e1071_BAF[,3:154])
+
+tidy_baf_hamming$Species <- tidy_baf_hamming$isolate[ast_profiles_BAF$Species]
+
+tidy_baf_hamming %>%
+  select(Species, Location, hamming) %>%
+  chordDiagram(directional=2,
+               annotationTrack = c("grid"), preAllocateTracks = 1)
+
+#chordDiagramFromMatrix(ast_hamming_e1071_BAF)
+
+circos.trackPlotRegion(track.index = 1, panel.fun = function(x, y) {
+  xlim = get.cell.meta.data("xlim")
+  ylim = get.cell.meta.data("ylim")
+  sector.name = get.cell.meta.data("sector.index")
+  circos.text(mean(xlim), ylim[1] + .1, sector.name, facing = "clockwise", niceFacing = TRUE, adj = c(0, 0.5))
+}, bg.border = NA)
+
+circos.clear()
 
 # Generate UpSet figures --------------------------------------------------
 
